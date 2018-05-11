@@ -12,7 +12,7 @@ libraryDependencies ++= Seq(
 lazy val root = (project in file(".")).
   enablePlugins(JavaAppPackaging, BuildInfoPlugin).
   settings(
-    organization := "com.functionalcapture",
+    organization := "com.ruimo",
     scalaVersion := "2.12.4",
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "generated"
