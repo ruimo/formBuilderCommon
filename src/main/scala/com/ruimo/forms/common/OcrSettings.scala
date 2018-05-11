@@ -44,15 +44,18 @@ sealed trait OcrSettings
 
 sealed trait TesseractLang {
   val code: String
+  val tesseractLangCode: String
 }
 
 case object TesseractLangJa extends TesseractLang {
   val code: String = "ja"
+  val tesseractLangCode = "jpn"
   override def toString = "日本語"
 }
 
 case object TesseractLangEn extends TesseractLang {
   val code: String = "en"
+  val tesseractLangCode = "eng"
   override def toString = "英語"
 }
 
