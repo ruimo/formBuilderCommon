@@ -14,17 +14,10 @@ object TesseractAcceptChars {
     chars: imm.Set[Tesseract.OcrChars],
     custom: String
   ): TesseractAcceptChars = TesseractAcceptCharsImpl(chars, custom)
-}
 
-private case class TesseractAcceptCharsImpl(
-  chars: imm.Set[Tesseract.OcrChars],
-  custom: String
-) extends TesseractAcceptChars
-
-private object TesseractAcceptCharsImpl {
-  implicit object tesseractAcceptCharsImplFormat extends Format[TesseractAcceptCharsImpl] {
-    override def reads(jv: JsValue): JsResult[TesseractAcceptCharsImpl] = JsSuccess(
-      TesseractAcceptCharsImpl(
+  implicit object tesseractAcceptCharsFormat extends Format[TesseractAcceptChars] {
+    override def reads(jv: JsValue): JsResult[TesseractAcceptChars] = JsSuccess(
+      TesseractAcceptChars(
         ((jv \ "chars").as[Seq[String]]).flatMap { s =>
           Tesseract.OcrChars.tryParse(s)
         }.toSet,
@@ -32,12 +25,17 @@ private object TesseractAcceptCharsImpl {
       )
     )
 
-    override def writes(f: TesseractAcceptCharsImpl): JsValue = Json.obj(
+    override def writes(f: TesseractAcceptChars): JsValue = Json.obj(
       "chars" -> f.chars.map(_.code),
       "custom" -> f.custom
     )
   }
 }
+
+private case class TesseractAcceptCharsImpl(
+  chars: imm.Set[Tesseract.OcrChars],
+  custom: String
+) extends TesseractAcceptChars
 
 trait OcrSettings
 
@@ -78,25 +76,16 @@ object TesseractOcrSettings {
     lang: TesseractLang,
     acceptChars: TesseractAcceptChars
   ): TesseractOcrSettings = TesseractOcrSettingsImpl(lang, acceptChars)
-}
 
-private case class TesseractOcrSettingsImpl(
-  lang: TesseractLang,
-  acceptChars: TesseractAcceptChars
-) extends TesseractOcrSettings
-
-private object TesseractOcrSettingsImpl {
-  import TesseractAcceptCharsImpl.tesseractAcceptCharsImplFormat
-
-  implicit object tesseractOcrSettingsImplFormat extends Format[TesseractOcrSettingsImpl] {
-    override def reads(jv: JsValue): JsResult[TesseractOcrSettingsImpl] = JsSuccess(
-      TesseractOcrSettingsImpl(
+  implicit object tesseractOcrSettingsFormat extends Format[TesseractOcrSettings] {
+    override def reads(jv: JsValue): JsResult[TesseractOcrSettings] = JsSuccess(
+      TesseractOcrSettings(
         (jv \ "lang").as[TesseractLang],
-        (jv \ "acceptChars").as[TesseractAcceptCharsImpl]
+        (jv \ "acceptChars").as[TesseractAcceptChars]
       )
     )
 
-    override def writes(f: TesseractOcrSettingsImpl): JsValue = Json.obj(
+    override def writes(f: TesseractOcrSettings): JsValue = Json.obj(
       "lang" -> f.lang,
       "acceptChars" -> (
         f.acceptChars match {
@@ -106,3 +95,8 @@ private object TesseractOcrSettingsImpl {
     )
   }
 }
+
+private case class TesseractOcrSettingsImpl(
+  lang: TesseractLang,
+  acceptChars: TesseractAcceptChars
+) extends TesseractOcrSettings
