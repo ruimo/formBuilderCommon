@@ -37,7 +37,7 @@ private case class TesseractAcceptCharsImpl(
   custom: String
 ) extends TesseractAcceptChars
 
-trait OcrSettings
+sealed trait OcrSettings
 
 sealed trait TesseractLang {
   val code: String
@@ -86,6 +86,7 @@ object TesseractOcrSettings {
     )
 
     override def writes(f: TesseractOcrSettings): JsValue = Json.obj(
+      "engine" -> "tesseract",
       "lang" -> f.lang,
       "acceptChars" -> (
         f.acceptChars match {
@@ -100,3 +101,25 @@ private case class TesseractOcrSettingsImpl(
   lang: TesseractLang,
   acceptChars: TesseractAcceptChars
 ) extends TesseractOcrSettings
+
+object OcrSettings {
+  implicit object ocrSettingsFormat extends Format[OcrSettings] {
+    override def reads(jv: JsValue): JsResult[OcrSettings] = {
+      (jv \ "engine").as[String] match {
+        case "tesseract" => JsSuccess(jv.as[TesseractOcrSettings])
+        case that: String => JsError(JsPath \ "engine", "Unknown OCR engine name '" + that + "'")
+      }
+    }
+
+    override def writes(os: OcrSettings): JsValue = os match {
+      case tos: TesseractOcrSettings => Json.obj(
+        "lang" -> tos.lang,
+        "acceptChars" -> (
+          tos.acceptChars match {
+            case ta: TesseractAcceptCharsImpl => ta
+          }
+        )
+      )
+    }
+  }
+}
