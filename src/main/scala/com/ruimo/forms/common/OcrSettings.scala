@@ -7,6 +7,7 @@ import scala.collection.{immutable => imm}
 trait TesseractAcceptChars {
   def chars: imm.Set[Tesseract.OcrChars]
   def custom: String
+  def union: String
 }
 
 object TesseractAcceptChars {
@@ -35,7 +36,9 @@ object TesseractAcceptChars {
 private case class TesseractAcceptCharsImpl(
   chars: imm.Set[Tesseract.OcrChars],
   custom: String
-) extends TesseractAcceptChars
+) extends TesseractAcceptChars {
+  val union: String = chars.map(_.chars).foldLeft(new StringBuilder)(_.append(_)).append(custom).toString.distinct
+}
 
 sealed trait OcrSettings
 
