@@ -86,6 +86,19 @@ object TesseractLang {
   }
 }
 
+object GoogleOcrLang {
+  implicit object googleOcrLangFormat extends Format[GoogleOcrLang] {
+    override def reads(jv: JsValue): JsResult[GoogleOcrLang] = {
+      val code = jv.as[String]
+      JsSuccess(
+        if (code == GoogleOcrLangEn.code) GoogleOcrLangEn else GoogleOcrLangJa
+      )
+    }
+
+    override def writes(d: GoogleOcrLang): JsValue = JsString(d.code)
+  }
+}
+
 trait TesseractOcrSettings extends OcrSettings {
   def lang: TesseractLang
   def acceptChars: TesseractAcceptChars
@@ -117,16 +130,44 @@ object TesseractOcrSettings {
   }
 }
 
+trait GoogleOcrSettings extends OcrSettings {
+  def lang: GoogleOcrLang
+}
+
+object GoogleOcrSettings {
+  def apply(
+    lang: GoogleOcrLang
+  ): GoogleOcrSettings = GoogleOcrSettingsImpl(lang)
+
+  implicit object googleOcrSettingsFormat extends Format[GoogleOcrSettings] {
+    override def reads(jv: JsValue): JsResult[GoogleOcrSettings] = JsSuccess(
+      GoogleOcrSettings(
+        (jv \ "lang").as[GoogleOcrLang]
+      )
+    )
+
+    override def writes(f: GoogleOcrSettings): JsValue = Json.obj(
+      "engine" -> "google",
+      "lang" -> f.lang
+    )
+  }
+}
+
 private case class TesseractOcrSettingsImpl(
   lang: TesseractLang,
   acceptChars: TesseractAcceptChars
 ) extends TesseractOcrSettings
+
+private case class GoogleOcrSettingsImpl(
+  lang: GoogleOcrLang
+) extends GoogleOcrSettings
 
 object OcrSettings {
   implicit object ocrSettingsFormat extends Format[OcrSettings] {
     override def reads(jv: JsValue): JsResult[OcrSettings] = {
       (jv \ "engine").as[String] match {
         case "tesseract" => JsSuccess(jv.as[TesseractOcrSettings])
+        case "google" => JsSuccess(jv.as[GoogleOcrSettings])
         case that: String => JsError(JsPath \ "engine", "Unknown OCR engine name '" + that + "'")
       }
     }
@@ -139,6 +180,10 @@ object OcrSettings {
             case ta: TesseractAcceptCharsImpl => ta
           }
         )
+      )
+
+      case gos: GoogleOcrSettings => Json.obj(
+        "lang" -> gos.lang
       )
     }
   }
