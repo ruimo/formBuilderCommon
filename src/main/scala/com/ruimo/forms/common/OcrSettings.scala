@@ -59,6 +59,20 @@ case object TesseractLangEn extends TesseractLang {
   override def toString = "英語"
 }
 
+sealed trait GoogleOcrLang {
+  val code: String
+}
+
+case object GoogleOcrLangJa extends GoogleOcrLang {
+  val code: String = "ja"
+  override def toString = "日本語"
+}
+
+case object GoogleOcrLangEn extends GoogleOcrLang {
+  val code: String = "en"
+  override def toString = "英語"
+}
+
 object TesseractLang {
   implicit object tesseractLangFormat extends Format[TesseractLang] {
     override def reads(jv: JsValue): JsResult[TesseractLang] = {
