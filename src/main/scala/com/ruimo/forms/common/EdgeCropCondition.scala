@@ -2,7 +2,7 @@ package com.ruimo.forms.common
 
 import com.ruimo.graphics.twodim.Area
 import com.ruimo.scoins.Percent
-import play.api.libs.json.{JsArray, JsNumber, JsObject, Json}
+import play.api.libs.json._
 
 // 0 - 254
 final class EdgeCropSensivity(val value: Int) extends AnyVal {
@@ -22,22 +22,43 @@ trait EdgeCropCondition {
   def bottomArea: Option[Area]
   def leftArea: Option[Area]
   def rightArea: Option[Area]
+  def edge: Edge
 
   def asJson: JsObject
 }
 
+object EdgeCropCondition {
+  def areaToJson(area: Area) = {
+    JsArray(
+      Seq(
+        JsNumber(area.x.value), JsNumber(area.y.value), JsNumber(area.w.value), JsNumber(area.h.value)
+      )
+    )
+  }
+}
+
+sealed trait Edge
+
+case class BlackEdge(
+  topSensivity: EdgeCropSensivity,
+  bottomSensivity: EdgeCropSensivity,
+  leftSensivity: EdgeCropSensivity,
+  rightSensivity: EdgeCropSensivity
+) extends Edge
+
+case class ColorEdge(
+  h: Double,
+  s: Double,
+  v: Double,
+  errorPercentage: Percent
+) extends Edge
+
 trait BlackEdgeCropCondition extends EdgeCropCondition {
-  def topSensivity: EdgeCropSensivity
-  def bottomSensivity: EdgeCropSensivity
-  def leftSensivity: EdgeCropSensivity
-  def rightSensivity: EdgeCropSensivity
+  def edge: BlackEdge
 }
 
 trait ColorEdgeCropCondition extends EdgeCropCondition {
-  def h: Double
-  def s: Percent
-  def v: Percent
-  def errorPercentage: Percent
+  def edge: ColorEdge
 }
 
 case class BlackEdgeCropConditionImpl(
@@ -45,31 +66,45 @@ case class BlackEdgeCropConditionImpl(
   bottomArea: Option[Area],
   leftArea: Option[Area],
   rightArea: Option[Area],
-  topSensivity: EdgeCropSensivity,
-  bottomSensivity: EdgeCropSensivity,
-  rightSensivity: EdgeCropSensivity,
-  leftSensivity: EdgeCropSensivity
+  edge: BlackEdge
 ) extends BlackEdgeCropCondition {
   lazy val asJson: JsObject = {
-    def areaToJson(area: Area) = {
-      JsArray(
-        Seq(
-          JsNumber(area.x.value), JsNumber(area.y.value), JsNumber(area.w.value), JsNumber(area.h.value)
-        )
-      )
-    }
-
     JsObject(
-      topArea.map { a => "top" -> areaToJson(a) }.toSeq ++
-      bottomArea.map { a => "bottom" -> areaToJson(a) }.toSeq ++
-      leftArea.map { a => "left" -> areaToJson(a) }.toSeq ++
-      rightArea.map { a => "right" -> areaToJson(a) }.toSeq
+      Seq("cropType" -> JsString("blackEdgeCrop")) ++
+      topArea.map { a => "top" -> EdgeCropCondition.areaToJson(a) } ++
+      bottomArea.map { a => "bottom" -> EdgeCropCondition.areaToJson(a) } ++
+      leftArea.map { a => "left" -> EdgeCropCondition.areaToJson(a) } ++
+      rightArea.map { a => "right" -> EdgeCropCondition.areaToJson(a) }
     ) ++ Json.obj(
-      "topSensivity" -> JsNumber(topSensivity.value),
-      "bottomSensivity" -> JsNumber(bottomSensivity.value),
-      "leftSensivity" -> JsNumber(leftSensivity.value),
-      "rightSensivity" -> JsNumber(rightSensivity.value)
+      "topSensivity" -> JsNumber(edge.topSensivity.value),
+      "bottomSensivity" -> JsNumber(edge.bottomSensivity.value),
+      "leftSensivity" -> JsNumber(edge.leftSensivity.value),
+      "rightSensivity" -> JsNumber(edge.rightSensivity.value)
     )
   }
 }
+
+case class ColorEdgeCropConditionImpl(
+  topArea: Option[Area],
+  bottomArea: Option[Area],
+  leftArea: Option[Area],
+  rightArea: Option[Area],
+  edge: ColorEdge
+) extends ColorEdgeCropCondition {
+  lazy val asJson: JsObject = {
+    JsObject(
+      Seq("cropType" -> JsString("colorEdgeCrop")) ++
+      topArea.map { a => "top" -> EdgeCropCondition.areaToJson(a) } ++
+      bottomArea.map { a => "bottom" -> EdgeCropCondition.areaToJson(a) } ++
+      leftArea.map { a => "left" -> EdgeCropCondition.areaToJson(a) } ++
+      rightArea.map { a => "right" -> EdgeCropCondition.areaToJson(a) }
+    ) ++ Json.obj(
+      "h" -> JsNumber(edge.h),
+      "s" -> JsNumber(edge.s),
+      "v" -> JsNumber(edge.v),
+      "errorPercentage" -> JsNumber(edge.errorPercentage.value)
+    )
+  }
+}
+
 
