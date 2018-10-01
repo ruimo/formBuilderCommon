@@ -69,6 +69,7 @@ object EdgeCropCondition {
             (js \ "s").as[Double],
             (js \ "v").as[Double],
             Percent((js \ "errorPercentage").as[Double]),
+            Percent((js \ "threshold").as[Double])
           )
         )
     }
@@ -88,7 +89,8 @@ case class ColorEdge(
   h: Double,
   s: Double,
   v: Double,
-  errorPercentage: Percent
+  errorPercentage: Percent,
+  threshold: Percent
 ) extends Edge
 
 trait BlackEdgeCropCondition extends EdgeCropCondition {
@@ -140,7 +142,8 @@ case class ColorEdgeCropConditionImpl(
       "h" -> JsNumber(edge.h),
       "s" -> JsNumber(edge.s),
       "v" -> JsNumber(edge.v),
-      "errorPercentage" -> JsNumber(edge.errorPercentage.value)
+      "errorPercentage" -> JsNumber(edge.errorPercentage.value),
+      "threshold" -> JsNumber(edge.threshold.value)
     )
   }
 }
