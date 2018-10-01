@@ -5,15 +5,15 @@ import com.ruimo.scoins.Percent
 import play.api.libs.json._
 
 // 0 - 254
-final class EdgeCropSensivity(val value: Int) extends AnyVal {
-  override def toString = "EdgeCropSensivity(" + value + ")"
+final class EdgeCropSensitivity(val value: Int) extends AnyVal {
+  override def toString = "EdgeCropSensitivity(" + value + ")"
 }
 
-object EdgeCropSensivity {
-  def apply(value: Int): EdgeCropSensivity = {
+object EdgeCropSensitivity {
+  def apply(value: Int): EdgeCropSensitivity = {
     if (value < 0 || 254 < value)
       throw new IllegalArgumentException("black level(=" + value + ") should be 0-254")
-    new EdgeCropSensivity(value)
+    new EdgeCropSensitivity(value)
   }
 }
 
@@ -35,15 +35,53 @@ object EdgeCropCondition {
       )
     )
   }
+
+  def jsonToArea(js: JsLookupResult): Area = {
+    val v = js.as[Array[Double]]
+    Area(
+      Percent(v(0)), Percent(v(1)), Percent(v(2)), Percent(v(3))
+    )
+  }
+
+  def parse(js: JsValue): EdgeCropCondition = {
+    (js \ "cropType").asOpt[String].getOrElse("blackEdgeCrop") match {
+      case "blackEdgeCrop" =>
+        BlackEdgeCropConditionImpl(
+          Some(jsonToArea(js \ "top")),
+          Some(jsonToArea(js \ "bottom")),
+          Some(jsonToArea(js \ "left")),
+          Some(jsonToArea(js \ "right")),
+          BlackEdge(
+            EdgeCropSensitivity((js \ "topSensitivity").asOpt[Int].getOrElse(254)),
+            EdgeCropSensitivity((js \ "bottomSensitivity").asOpt[Int].getOrElse(254)),
+            EdgeCropSensitivity((js \ "leftSensitivity").asOpt[Int].getOrElse(254)),
+            EdgeCropSensitivity((js \ "rightSensitivity").asOpt[Int].getOrElse(254))
+          )
+        )
+      case "colorEdgeCrop" =>
+        ColorEdgeCropConditionImpl(
+          Some(jsonToArea(js \ "top")),
+          Some(jsonToArea(js \ "bottom")),
+          Some(jsonToArea(js \ "left")),
+          Some(jsonToArea(js \ "right")),
+          ColorEdge(
+            (js \ "h").as[Double],
+            (js \ "s").as[Double],
+            (js \ "v").as[Double],
+            Percent((js \ "errorPercentage").as[Double]),
+          )
+        )
+    }
+  }
 }
 
 sealed trait Edge
 
 case class BlackEdge(
-  topSensivity: EdgeCropSensivity,
-  bottomSensivity: EdgeCropSensivity,
-  leftSensivity: EdgeCropSensivity,
-  rightSensivity: EdgeCropSensivity
+  topSensitivity: EdgeCropSensitivity,
+  bottomSensitivity: EdgeCropSensitivity,
+  leftSensitivity: EdgeCropSensitivity,
+  rightSensitivity: EdgeCropSensitivity
 ) extends Edge
 
 case class ColorEdge(
@@ -76,10 +114,10 @@ case class BlackEdgeCropConditionImpl(
       leftArea.map { a => "left" -> EdgeCropCondition.areaToJson(a) } ++
       rightArea.map { a => "right" -> EdgeCropCondition.areaToJson(a) }
     ) ++ Json.obj(
-      "topSensivity" -> JsNumber(edge.topSensivity.value),
-      "bottomSensivity" -> JsNumber(edge.bottomSensivity.value),
-      "leftSensivity" -> JsNumber(edge.leftSensivity.value),
-      "rightSensivity" -> JsNumber(edge.rightSensivity.value)
+      "topSensitivity" -> JsNumber(edge.topSensitivity.value),
+      "bottomSensitivity" -> JsNumber(edge.bottomSensitivity.value),
+      "leftSensitivity" -> JsNumber(edge.leftSensitivity.value),
+      "rightSensitivity" -> JsNumber(edge.rightSensitivity.value)
     )
   }
 }
