@@ -235,7 +235,7 @@ object GoogleOcrSettings {
   implicit object googleOcrSettingsFormat extends Format[GoogleOcrSettings] {
     override def reads(jv: JsValue): JsResult[GoogleOcrSettings] = JsSuccess(
       GoogleOcrSettings(
-        (jv \ "colorPassFilter").asOpt[Array[ColorPassFilterSettings]].getOrElse(Array())toList,
+        (jv \ "colorPassFilter").asOpt[Array[ColorPassFilterSettings]].getOrElse(Array()).toList,
         (jv \ "lang").as[GoogleOcrLang]
       )
     )
