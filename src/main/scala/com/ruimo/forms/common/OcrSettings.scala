@@ -1,5 +1,7 @@
 package com.ruimo.forms.common
 
+import com.ruimo.graphics.twodim.Hsv
+import com.ruimo.scoins.Percent
 import play.api.libs.json._
 
 import scala.collection.{immutable => imm}
@@ -97,32 +99,32 @@ private case class TegakiAcceptCharsImpl(
 ) extends TegakiAcceptChars
 
 trait ColorPassFilterSettings {
-  val hueValue: Double // 0 <= hue < 360
-  val hueErrorAllowance: Double // 0 <= error <= 100
+  val hueValue: Hsv.Hue
+  val hueErrorAllowance: Percent
 }
 
 object ColorPassFilterSettings {
-  def apply(hueValue: Double, hueErrorAllowance: Double): ColorPassFilterSettings =
+  def apply(hueValue: Hsv.Hue, hueErrorAllowance: Percent): ColorPassFilterSettings =
     ColorPassFilterSettingsImpl(hueValue, hueErrorAllowance)
 
   implicit object colorPassFilterSettingsFormat extends Format[ColorPassFilterSettings] {
     override def reads(jv: JsValue): JsResult[ColorPassFilterSettings] = JsSuccess(
       ColorPassFilterSettings(
-        (jv \ "h").as[Double],
-        (jv \ "hErrorAllowance").as[Double]
+        Hsv.Hue((jv \ "h").as[Double]),
+        Percent((jv \ "hErrorAllowance").as[Double])
       )
     )
 
     override def writes(f: ColorPassFilterSettings): JsValue = Json.obj(
-      "h" -> f.hueValue,
-      "hErrorAllowance" -> f.hueErrorAllowance
+      "h" -> f.hueValue.value,
+      "hErrorAllowance" -> f.hueErrorAllowance.value
     )
   }
 }
 
 private case class ColorPassFilterSettingsImpl(
-  hueValue: Double, // 0 <= hue < 360
-  hueErrorAllowance: Double // 0 <= error <= 100
+  hueValue: Hsv.Hue, // 0 <= hue < 360
+  hueErrorAllowance: Percent // 0 <= error <= 100
 ) extends ColorPassFilterSettings
 
 sealed trait OcrSettings {
