@@ -127,8 +127,34 @@ private case class ColorPassFilterSettingsImpl(
   hueErrorAllowance: Percent // 0 <= error <= 100
 ) extends ColorPassFilterSettings
 
+trait BinarizationSettings {
+  val brightnessThreshold: Int
+}
+
+object BinarizationSettings {
+  def apply(brightnessThreshold: Int): BinarizationSettings =
+    BinarizationSettingsImpl(brightnessThreshold)
+
+  implicit object binarizationSettingsFormat extends Format[BinarizationSettings] {
+    override def reads(jv: JsValue): JsResult[BinarizationSettings] = JsSuccess(
+      BinarizationSettings(
+        (jv \ "brightnessThreshold").as[Int]
+      )
+    )
+
+    override def writes(f: BinarizationSettings): JsValue = Json.obj(
+      "brightnessThreshold" -> f.brightnessThreshold
+    )
+  }
+}
+
+private case class BinarizationSettingsImpl(
+  brightnessThreshold: Int // 0 - 255
+) extends BinarizationSettings
+
 sealed trait OcrSettings {
   def colorPassFilter: imm.Seq[ColorPassFilterSettings]
+  def binarization: Option[BinarizationSettings]
 }
 
 sealed trait TesseractLang {
@@ -196,14 +222,16 @@ trait TesseractOcrSettings extends OcrSettings {
 object TesseractOcrSettings {
   def apply(
     colorPassFilter: imm.Seq[ColorPassFilterSettings],
+    binarization: Option[BinarizationSettings],
     lang: TesseractLang,
     acceptChars: TesseractAcceptChars
-  ): TesseractOcrSettings = TesseractOcrSettingsImpl(colorPassFilter, lang, acceptChars)
+  ): TesseractOcrSettings = TesseractOcrSettingsImpl(colorPassFilter, binarization, lang, acceptChars)
 
   implicit object tesseractOcrSettingsFormat extends Format[TesseractOcrSettings] {
     override def reads(jv: JsValue): JsResult[TesseractOcrSettings] = JsSuccess(
       TesseractOcrSettings(
         (jv \ "colorPassFilter").asOpt[Array[ColorPassFilterSettings]].getOrElse(Array()).toList,
+        (jv \ "binarization").asOpt[BinarizationSettings],
         (jv \ "lang").as[TesseractLang],
         (jv \ "acceptChars").as[TesseractAcceptChars]
       )
@@ -218,7 +246,7 @@ object TesseractOcrSettings {
           case ta: TesseractAcceptCharsImpl => ta
         }
       )
-    )
+    ) ++ f.binarization.map(b => Json.obj("binarization" -> b)).getOrElse(Json.obj())
   }
 }
 
@@ -229,13 +257,15 @@ trait GoogleOcrSettings extends OcrSettings {
 object GoogleOcrSettings {
   def apply(
     colorPassFilter: imm.Seq[ColorPassFilterSettings],
+    binarization: Option[BinarizationSettings],
     lang: GoogleOcrLang
-  ): GoogleOcrSettings = GoogleOcrSettingsImpl(colorPassFilter, lang)
+  ): GoogleOcrSettings = GoogleOcrSettingsImpl(colorPassFilter, binarization, lang)
 
   implicit object googleOcrSettingsFormat extends Format[GoogleOcrSettings] {
     override def reads(jv: JsValue): JsResult[GoogleOcrSettings] = JsSuccess(
       GoogleOcrSettings(
         (jv \ "colorPassFilter").asOpt[Array[ColorPassFilterSettings]].getOrElse(Array()).toList,
+        (jv \ "binarization").asOpt[BinarizationSettings],
         (jv \ "lang").as[GoogleOcrLang]
       )
     )
@@ -244,7 +274,7 @@ object GoogleOcrSettings {
       "engine" -> "google",
       "colorPassFilter" -> f.colorPassFilter,
       "lang" -> f.lang
-    )
+    ) ++ f.binarization.map(b => Json.obj("binarization" -> b)).getOrElse(Json.obj())
   }
 }
 
@@ -257,15 +287,17 @@ trait TegakiOcrSettings extends OcrSettings {
 object TegakiOcrSettings {
   def apply(
     colorPassFilter: imm.Seq[ColorPassFilterSettings],
+    binarization: Option[BinarizationSettings],
     useLangModel: Boolean,
     isMultiLine: Boolean,
     acceptChars: TegakiAcceptChars
-  ): TegakiOcrSettings = TegakiOcrSettingsImpl(colorPassFilter, useLangModel, isMultiLine, acceptChars)
+  ): TegakiOcrSettings = TegakiOcrSettingsImpl(colorPassFilter, binarization, useLangModel, isMultiLine, acceptChars)
 
   implicit object tegakiOcrSettingsFormat extends Format[TegakiOcrSettings] {
     override def reads(jv: JsValue): JsResult[TegakiOcrSettings] = JsSuccess(
       TegakiOcrSettings(
         (jv \ "colorPassFilter").asOpt[Array[ColorPassFilterSettings]].getOrElse(Array()).toList,
+        (jv \ "binarization").asOpt[BinarizationSettings],
         (jv \ "useLangModel").as[Boolean],
         (jv \ "isMultiLine").as[Boolean],
         (jv \ "acceptChars").as[TegakiAcceptChars]
@@ -282,23 +314,26 @@ object TegakiOcrSettings {
           case ta: TegakiAcceptCharsImpl => ta
         }
       )
-    )
+    ) ++ f.binarization.map(b => Json.obj("binarization" -> b)).getOrElse(Json.obj())
   }
 }
 
 private case class TesseractOcrSettingsImpl(
   colorPassFilter: imm.Seq[ColorPassFilterSettings],
+  binarization: Option[BinarizationSettings],
   lang: TesseractLang,
   acceptChars: TesseractAcceptChars
 ) extends TesseractOcrSettings
 
 private case class GoogleOcrSettingsImpl(
   colorPassFilter: imm.Seq[ColorPassFilterSettings],
+  binarization: Option[BinarizationSettings],
   lang: GoogleOcrLang
 ) extends GoogleOcrSettings
 
 private case class TegakiOcrSettingsImpl(
   colorPassFilter: imm.Seq[ColorPassFilterSettings],
+  binarization: Option[BinarizationSettings],
   useLangModel: Boolean,
   isMultiLine: Boolean,
   acceptChars: TegakiAcceptChars

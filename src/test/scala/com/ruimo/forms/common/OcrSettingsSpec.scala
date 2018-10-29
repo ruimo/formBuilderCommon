@@ -10,6 +10,7 @@ class OcrSettingsSpec extends Specification {
     "can serialize tesseract settings to json." in {
       val s = TesseractOcrSettings(
         imm.Seq(),
+        None,
         TesseractLangJa,
         TesseractAcceptChars(
           imm.Set(Tesseract.OcrDigit, Tesseract.OcrComma),
@@ -26,6 +27,7 @@ class OcrSettingsSpec extends Specification {
     "can serialize google ocr settings to json." in {
       val s = GoogleOcrSettings(
         imm.Seq(),
+        None,
         GoogleOcrLangJa
       )
 
