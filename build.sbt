@@ -4,8 +4,8 @@ name := "FormBuilderCommon"
 fork in run := true
 scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 libraryDependencies ++= Seq(
-  "com.ruimo" %% "scoins" % "1.21",
-  "com.ruimo" %% "graphics" % "1.12",
+  "com.ruimo" %% "scoins" % "1.22",
+  "com.ruimo" %% "graphics" % "1.13",
   "com.typesafe.play" % "play-json_2.12" % "2.6.8",
   "org.specs2" %% "specs2-core" % "4.0.0" % "test"
 )
