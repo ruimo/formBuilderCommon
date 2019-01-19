@@ -214,9 +214,74 @@ object GoogleOcrLang {
   }
 }
 
+trait MonoSpacedSettings {
+  val enabled: Boolean
+  val hEdgeThresholdPerHeight: Percent
+  val vEdgeThresholdPerHeight: Percent
+  val acceptableXgap: Percent
+  val acceptableYgap: Percent
+  val minCharBodyWidthPerHeight: Percent
+  val minCharWidthPerHeight: Percent
+  val maxCharWidthPerHeight: Percent
+}
+
+object MonoSpacedSettings {
+  def apply(
+    enabled: Boolean = false,
+    hEdgeThresholdPerHeight: Percent = Percent(5),
+    vEdgeThresholdPerHeight: Percent = Percent(5),
+    acceptableXgap: Percent = Percent(15),
+    acceptableYgap: Percent = Percent(5),
+    minCharBodyWidthPerHeight: Percent = Percent(15),
+    minCharWidthPerHeight: Percent = Percent(50),
+    maxCharWidthPerHeight: Percent = Percent(110)
+  ): MonoSpacedSettings = MonoSpacedSettingsImpl(
+    enabled,
+    hEdgeThresholdPerHeight, vEdgeThresholdPerHeight,
+    acceptableXgap, acceptableYgap,
+    minCharBodyWidthPerHeight,
+    minCharWidthPerHeight, maxCharWidthPerHeight
+  )
+
+  implicit object monoSpacedSettingsFormat extends Format[MonoSpacedSettings] {
+    override def reads(jv: JsValue): JsResult[MonoSpacedSettings] = JsSuccess(
+      MonoSpacedSettings(
+        (jv \ "enabled").as[Boolean],
+        Percent((jv \ "hEdgeThresholdPerHeight").as[Double]),
+        Percent((jv \ "vEdgeThresholdPerHeight").as[Double]),
+        Percent((jv \ "acceptableXgap").as[Double]),
+        Percent((jv \ "acceptableYgap").as[Double]),
+        Percent((jv \ "minCharBodyWidthPerHeight").as[Double]),
+        Percent((jv \ "minCharWidthPerHeight").as[Double]),
+        Percent((jv \ "maxCharWidthPerHeight").as[Double])
+      )
+    )
+
+    override def writes(f: MonoSpacedSettings): JsValue = Json.obj(
+      "enabled" -> f.enabled,
+      "hEdgeThresholdPerHeight" -> f.hEdgeThresholdPerHeight.value,
+      "vEdgeThresholdPerHeight" -> f.vEdgeThresholdPerHeight.value,
+      "acceptableXgap" -> f.acceptableXgap.value,
+      "acceptableYgap" -> f.acceptableYgap.value,
+      "minCharBodyWidthPerHeight" -> f.minCharBodyWidthPerHeight.value,
+      "minCharWidthPerHeight" -> f.minCharWidthPerHeight.value,
+      "maxCharWidthPerHeight" -> f.maxCharWidthPerHeight.value
+    )
+  }
+}
+
+private case class MonoSpacedSettingsImpl(
+  enabled: Boolean,
+  hEdgeThresholdPerHeight: Percent, vEdgeThresholdPerHeight: Percent,
+  acceptableXgap: Percent, acceptableYgap: Percent,
+  minCharBodyWidthPerHeight: Percent,
+  minCharWidthPerHeight: Percent, maxCharWidthPerHeight: Percent
+) extends MonoSpacedSettings
+
 trait TesseractOcrSettings extends OcrSettings {
   def lang: TesseractLang
   def acceptChars: TesseractAcceptChars
+  def monoSpacedSettings: MonoSpacedSettings
 }
 
 object TesseractOcrSettings {
@@ -224,8 +289,11 @@ object TesseractOcrSettings {
     colorPassFilter: imm.Seq[ColorPassFilterSettings],
     binarization: Option[BinarizationSettings],
     lang: TesseractLang,
-    acceptChars: TesseractAcceptChars
-  ): TesseractOcrSettings = TesseractOcrSettingsImpl(colorPassFilter, binarization, lang, acceptChars)
+    acceptChars: TesseractAcceptChars,
+    monospacedsettings: MonoSpacedSettings = MonoSpacedSettings()
+  ): TesseractOcrSettings = TesseractOcrSettingsImpl(
+    colorPassFilter, binarization, lang, acceptChars, monospacedsettings
+  )
 
   implicit object tesseractOcrSettingsFormat extends Format[TesseractOcrSettings] {
     override def reads(jv: JsValue): JsResult[TesseractOcrSettings] = JsSuccess(
@@ -233,7 +301,8 @@ object TesseractOcrSettings {
         (jv \ "colorPassFilter").asOpt[Array[ColorPassFilterSettings]].getOrElse(Array()).toList,
         (jv \ "binarization").asOpt[BinarizationSettings],
         (jv \ "lang").as[TesseractLang],
-        (jv \ "acceptChars").as[TesseractAcceptChars]
+        (jv \ "acceptChars").as[TesseractAcceptChars],
+        (jv \ "monoSpacedSettings").as[MonoSpacedSettings]
       )
     )
 
@@ -244,6 +313,11 @@ object TesseractOcrSettings {
       "acceptChars" -> (
         f.acceptChars match {
           case ta: TesseractAcceptCharsImpl => ta
+        }
+      ),
+      "monoSpacedSettings" -> (
+        f.monoSpacedSettings match {
+          case ms: MonoSpacedSettingsImpl => ms
         }
       )
     ) ++ f.binarization.map(b => Json.obj("binarization" -> b)).getOrElse(Json.obj())
@@ -322,7 +396,8 @@ private case class TesseractOcrSettingsImpl(
   colorPassFilter: imm.Seq[ColorPassFilterSettings],
   binarization: Option[BinarizationSettings],
   lang: TesseractLang,
-  acceptChars: TesseractAcceptChars
+  acceptChars: TesseractAcceptChars,
+  monoSpacedSettings: MonoSpacedSettings
 ) extends TesseractOcrSettings
 
 private case class GoogleOcrSettingsImpl(
