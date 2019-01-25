@@ -226,15 +226,23 @@ trait MonoSpacedSettings {
 }
 
 object MonoSpacedSettings {
+  val DefaultHEdgeThresholdPerHeight = Percent(5)
+  val DefaultVEdgeThresholdPerHeight = Percent(5)
+  val DefaultAcceptableXgap = Percent(15)
+  val DefaultAcceptableYgap = Percent(5)
+  val DefaultMinCharBodyWidthPerHeight = Percent(15)
+  val DefaultMinCharWidthPerHeight = Percent(50)
+  val DefaultMaxCharWidthPerHeight = Percent(110)
+
   def apply(
     enabled: Boolean = false,
-    hEdgeThresholdPerHeight: Percent = Percent(5),
-    vEdgeThresholdPerHeight: Percent = Percent(5),
-    acceptableXgap: Percent = Percent(15),
-    acceptableYgap: Percent = Percent(5),
-    minCharBodyWidthPerHeight: Percent = Percent(15),
-    minCharWidthPerHeight: Percent = Percent(50),
-    maxCharWidthPerHeight: Percent = Percent(110)
+    hEdgeThresholdPerHeight: Percent = DefaultHEdgeThresholdPerHeight,
+    vEdgeThresholdPerHeight: Percent = DefaultVEdgeThresholdPerHeight,
+    acceptableXgap: Percent = DefaultAcceptableXgap,
+    acceptableYgap: Percent = DefaultAcceptableYgap,
+    minCharBodyWidthPerHeight: Percent = DefaultMinCharBodyWidthPerHeight,
+    minCharWidthPerHeight: Percent = DefaultMinCharWidthPerHeight,
+    maxCharWidthPerHeight: Percent = DefaultMaxCharWidthPerHeight
   ): MonoSpacedSettings = MonoSpacedSettingsImpl(
     enabled,
     hEdgeThresholdPerHeight, vEdgeThresholdPerHeight,
