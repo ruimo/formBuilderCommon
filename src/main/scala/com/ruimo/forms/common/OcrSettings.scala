@@ -300,7 +300,7 @@ object TesseractOcrSettings {
     acceptChars: TesseractAcceptChars,
     monoSpacedSettings: MonoSpacedSettings = MonoSpacedSettings()
   ): TesseractOcrSettings = TesseractOcrSettingsImpl(
-    colorPassFilter, binarization, lang, acceptChars, monospacedsettings
+    colorPassFilter, binarization, lang, acceptChars, monoSpacedSettings
   )
 
   implicit object tesseractOcrSettingsFormat extends Format[TesseractOcrSettings] {
