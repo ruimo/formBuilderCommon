@@ -298,7 +298,7 @@ object TesseractOcrSettings {
     binarization: Option[BinarizationSettings],
     lang: TesseractLang,
     acceptChars: TesseractAcceptChars,
-    monospacedsettings: MonoSpacedSettings = MonoSpacedSettings()
+    monoSpacedSettings: MonoSpacedSettings = MonoSpacedSettings()
   ): TesseractOcrSettings = TesseractOcrSettingsImpl(
     colorPassFilter, binarization, lang, acceptChars, monospacedsettings
   )
