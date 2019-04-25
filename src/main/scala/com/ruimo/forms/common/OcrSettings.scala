@@ -310,7 +310,7 @@ object TesseractOcrSettings {
         (jv \ "binarization").asOpt[BinarizationSettings],
         (jv \ "lang").as[TesseractLang],
         (jv \ "acceptChars").as[TesseractAcceptChars],
-        (jv \ "monoSpacedSettings").as[MonoSpacedSettings]
+        (jv \ "monoSpacedSettings").asOpt[MonoSpacedSettings].getOrElse(MonoSpacedSettings())
       )
     )
 
